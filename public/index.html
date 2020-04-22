@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+<meta charset="UTF-8">
+<title>Chat Widget</title>
+
+<!--图标库-->
+<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css'>
+
+<!-- 默认样式-->
+<link rel="stylesheet" href="css/reset.min.css">
+
+<!-- 主要样式-->
+<link rel="stylesheet" href="css/style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+  window.onload = function(){
+    var app = new Vue({
+      el: '#app',
+      data: {
+        items: [
+        ],
+        wsSocket: null,
+        sentInput: null,
+        username: null,
+        showSentInput: false,
+      },
+      mounted: function() {
+        //console.log(JSON.parse('{"system":true,"data":{"username":"\u5c0f\u660e","message":"undefined \u5df2\u8fdb\u5165\u5927\u5385","date":"04\\/21 17:30:56"},"me":false}'));
+        this.usernameMake();
+        var that = this;
+        //Create WebSocket connection.
+        that.wsSocket = new WebSocket('ws://localhost:18308/chat');
+
+        // Connection opened
+        that.wsSocket.addEventListener('open', function (event) {
+        });
+
+        //Listen for messages
+        that.wsSocket.addEventListener('message', function (event) {
+          console.log("接受数据：" + event.data);
+          console.log(JSON.parse(event.data));
+          if(that.showSentInput === true) that.items.push(JSON.parse(event.data));
+        });
+      },
+      methods: {
+        send: function () {
+          var data = '{"router": "home.msg","data": "'+this.sentInput+'","ext": {}}';
+          console.log("发送消息：" + data);
+          this.wsSocket.send(data);
+          this.sentInput = null;
+        },
+        usernameMake: function () {
+          var arr = new Array('小明', '小亮', '小红', '小张', '小张');
+          this.username = arr[this.randomNum(0, arr.length)];
+        },
+        randomNum: function (minNum, maxNum) {
+          switch(arguments.length){
+            case 1:
+              return parseInt(Math.random()*minNum+1,10);
+              break;
+            case 2:
+              return parseInt(Math.random()*(maxNum-minNum+1)+minNum,10);
+              break;
+            default:
+              return 0;
+              break;
+          }
+        },
+        login: function(){
+          var data = '{"router": "home.bind","data": "'+this.username+'","ext": {}}';
+          console.log("点击进入，发送数据：" + data);
+          this.wsSocket.send(data);
+          this.showSentInput = true;
+        }
+      }
+    })
+  }
+
+</script>
+
+</head>
+<body>
+
+  <div id="app">
+    <div class="container clearfix">
+    <div class="people-list" id="people-list">
+      <div class="search">
+        <input type="text" placeholder="search" />
+        <i class="fa fa-search"></i>
+      </div>
+
+    </div>
+
+    <div class="chat">
+      <div class="chat-header clearfix">
+        <img src="img/t1.png" alt="avatar" />
+
+        <div class="chat-about">
+          <div class="chat-with">{{ username }}</div>
+          <div class="chat-num-messages">测试版</div>
+        </div>
+        <i class="fa fa-star"></i>
+      </div> <!-- end chat-header -->
+
+      <div class="chat-history">
+        <ul>
+          <li v-for="item in items" :key="item.message">
+            <template v-if="item.system == true">
+
+              <!--系统消息类型-->
+              <div class="message-data">
+                <span class="message-data-name"><i class="fa fa-circle online"></i> {{ item.data.message }}</span>
+                <span class="message-data-time">{{ item.data.date }}</span>
+              </div>
+
+            </template>
+            <template v-else>
+
+              <!--用户消息类型-->
+              <template v-if="item.me == true">
+
+                <!--其他人消息-->
+                <li class="clearfix" >
+                  <div class="message-data align-right">
+                    <span class="message-data-time" >{{ item.data.date }}</span> &nbsp; &nbsp;
+                    <span class="message-data-name" >{{ item.data.username }}</span> <i class="fa fa-circle me"></i>
+
+                  </div>
+                  <div class="message other-message float-right">
+                    {{ item.data.message }}
+                  </div>
+                </li>
+
+              </template>
+              <template v-else>
+
+                <!--本人消息-->
+                <div class="message-data">
+                  <span class="message-data-name"><i class="fa fa-circle online"></i> {{ item.data.username }}</span>
+                  <span class="message-data-time">{{ item.data.date }}</span>
+                </div>
+                <div class="message my-message">
+                  {{ item.data.message }}
+                </div>
+
+              </template>
+
+            </template>
+          </li>
+
+        </ul>
+
+      </div> <!-- end chat-history -->
+
+      <div class="chat-message clearfix">
+
+        <template v-if="showSentInput">
+
+          <textarea v-model="sentInput" name="message-to-send" id="message-to-send" placeholder ="Type your message" rows="3"></textarea>
+
+          <button v-on:click="send">发送</button>
+
+        </template>
+        <template v-else>
+
+          用户名 <input type="text" v-model="username">
+          <button v-on:click="login">进入</button>
+
+        </template>
+      </div> <!-- end chat-message -->
+
+    </div> <!-- end chat -->
+
+  </div> <!-- end container -->
+  </div>
+
+
+</body>
+</html>

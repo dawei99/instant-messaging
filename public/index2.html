@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script>
+        window.onload = function(){
+          var app = new Vue({
+            el: '#app',
+            data: {
+              items: [
+              ],
+              wsSocket: null,
+                sentInput: null,
+            },
+            mounted: function() {
+              var that = this;
+              //Create WebSocket connection.
+              that.wsSocket = new WebSocket('ws://localhost:18308/chat');
+
+              // Connection opened
+              that.wsSocket.addEventListener('open', function (event) {
+
+              });
+
+              //Listen for messages
+              that.wsSocket.addEventListener('message', function (event) {
+                that.items.push({message: event.data});
+                console.log('Message from server ', event.data);
+              });
+            },
+            methods: {
+              send: function () {
+                this.wsSocket.send('{"router": "home.msg","data": "'+this.sentInput+'","ext": {}}');
+              }
+            }
+          })
+        }
+
+    </script>
+</head>
+<body>
+  <div id="app">
+    <div class="content">
+      <ul id="example-1">
+        <li v-for="item in items" :key="item.message">
+          {{ item.message }}
+        </li>
+      </ul>
+      <input type="text" v-model="sentInput" /><a v-on:click="send" href="javascript:;">发送</a>
+    </div>
+  </div>
+</body>
+</html>
