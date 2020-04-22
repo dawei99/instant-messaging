@@ -37,6 +37,8 @@ use function server;
  */
 class ChatModule
 {
+    public const UPLOADDIR = 'public'.DIRECTORY_SEPARATOR.'atta'.DIRECTORY_SEPARATOR.'imgs'.DIRECTORY_SEPARATOR;
+
     private $username;
     private $uid;
 
@@ -58,27 +60,40 @@ class ChatModule
      */
     public function onMessage(Server $server, \Swoole\WebSocket\Frame $frame): void
     {
-        $fullData = json_decode($frame->data, true);
-        if ($fullData['router'] == 'home.bind') {
-            $this->username = $fullData['data'];
-            if (is_array(Redis::sMembers('chat:uids')) && !in_array($this->uid, Redis::sMembers('chat:uids'))) {
-                // 生成用户ID并加入在线队列
-                //$this->uid = Redis::incr('chat:incr_uid');
-                //Redis::sAdd('chat:uids', strval($this->uid));
-                // 通知所有用户
-                server()->pageEach(function ($fd) use ($frame) {
-                    $msg = $this->username . ' 已进入大厅';
-                    server()->push($fd, $this->result($msg, true));
-                }, 100);
+        $result = null;
+        if ($frame->opcode == 0x2) {
+            $imageDir = self::UPLOADDIR;
+            $imageName = time() . rand(1000,9999);
+            file_put_contents($imageDir . $imageName, $frame->data);
+            $host = 'http://127.0.0.1:18306/chat-upload-img/';
+            $result = $this->result($host . $imageName, false, false, 'img');
+        } elseif ($frame->opcode == 0x1) {
+            $fullData = json_decode($frame->data, true);
+            if ($fullData['router'] == 'home.bind') {
+
+                //if (is_array(Redis::sMembers('chat:uids')) && !in_array($this->uid, Redis::sMembers('chat:uids'))) {
+                    if (!$this->uid) {
+                        $this->username = $fullData['data'];
+                        $this->uid = Redis::incr('chat:offset_uid');
+                        $msg = $this->username . ' 已进入大厅';
+                        $result = $this->result($msg, true);
+                    }
+                //}
+            } else {
+                $msg = $fullData['data'];
+                if (!empty(server()->pageEach(function () {}))) {
+                    server()->pageEach(function ($fd) use($frame, $msg) {
+                        server()->push($fd, $this->result($msg, false, ($frame->fd == $fd)));
+                    }, 100);
+                }
             }
-        } else {
-            $msg = $fullData['data'];
-            if (!empty(server()->pageEach(function () {}))) {
-                // 向所有连接发消息
-                server()->pageEach(function ($fd) use ($frame, $msg) {
-                    server()->push($fd, $this->result($msg, false, ($frame->fd == $fd)));
-                }, 100);
-            }
+        }
+
+        // 通知所有用户
+        if ($result && !empty(server()->pageEach(function () {}))) {
+            server()->pageEach(function ($fd) use ($result) {
+                server()->push($fd, $result);
+            }, 100);
         }
     }
 
@@ -89,16 +104,25 @@ class ChatModule
      */
     public function onClose(server $server, int $nowFd): void
     {
-        if (!empty(server()->pageEach(function(){}))) {
+        if ($this->uid && !empty(server()->pageEach(function(){}))) {
             server()->pageEach(function($fd) use($nowFd) {
                 //Redis::sRem('chat:uids', strval($this->uid));
                 server()->push($fd,$this->result("{$this->username} 用户退出群聊", true));
             }, 100);
+            $this->uid = null;
+            $this->username = null;
         }
 
     }
 
-    private function result(string $msg, bool $system = false, bool $me=false) : string
+    /**
+     * @param string $msg
+     * @param bool $system
+     * @param bool $me
+     * @param string $type (text|img)
+     * @return string
+     */
+    private function result(string $msg, bool $system = false, bool $me=false, string $type="text") : string
     {
         return json_encode([
             'system' => $system,
@@ -107,6 +131,7 @@ class ChatModule
                 'message' => $msg,
                 'date' => date('m/d H:s:i',time())
             ],
+            'type' => $type,
             'me' => $me,
         ]);
     }

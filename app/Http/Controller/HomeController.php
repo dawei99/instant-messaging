@@ -11,6 +11,7 @@
 namespace App\Http\Controller;
 
 use App\Model\Data\GoodsData;
+use App\WebSocket\ChatModule;
 use Swoft;
 use Swoft\Http\Message\ContentType;
 use Swoft\Http\Message\Response;
@@ -38,6 +39,22 @@ class HomeController
         $content  = $renderer->render('home/index');
 
         return context()->getResponse()->withContentType(ContentType::HTML)->withContent($content);
+    }
+
+    /**
+     * @RequestMapping("/chat-upload-img[/{img}]")
+     * @throws Throwable
+     */
+    public function chatUploadImg(string $img): Response
+    {
+        /** @var Renderer $renderer */
+        $request = context()->getRequest()->getUri();
+        $imgFile = ChatModule::UPLOADDIR . $img;
+
+        return
+            file_exists($imgFile) ?
+            context()->getResponse()->file($imgFile, 'image/jpeg') :
+            context()->getResponse()->withContent("无图片")->withContentType('text/plain');
     }
 
     /**
