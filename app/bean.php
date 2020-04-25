@@ -21,7 +21,7 @@ use Swoft\Task\Swoole\FinishListener;
 use Swoft\Task\Swoole\TaskListener;
 use Swoft\WebSocket\Server\WebSocketServer;
 
-return [
+$config = [
     'noticeHandler'      => [
         'logFile' => '@runtime/logs/notice-%d{Y-m-d-H}.log',
     ],
@@ -191,3 +191,6 @@ return [
     'cliRouter'          => [// 'disabledGroups' => ['demo', 'test'],
     ],
 ];
+
+$config = array($config, require 'bean_local.php');
+return $config;
