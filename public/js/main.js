@@ -1,5 +1,5 @@
 window.onload = function(){
-  const WSHOST = 'ws://localhost:18308'; // websocket服务地址
+  const WSHOST = 'ws://192.168.1.100:18308'; // websocket服务地址
   var app = new Vue({
       el: '#app',
       data: {
