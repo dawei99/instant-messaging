@@ -10,12 +10,14 @@
 
 namespace App\WebSocket\Chat;
 
-use App\Model\Entity\TestUser;
+use App\WebSocket\ChatModule;
+use Swoft\Bean\Annotation\Mapping\Bean;
+use Swoft\Redis\Redis;
 use Swoft\Session\Session;
-use Swoft\WebSocket\Server\Annotation\Mapping\MessageMapping;
-use Swoft\WebSocket\Server\Annotation\Mapping\WsController;
 use Swoft\WebSocket\Server\Message\Message;
 use Swoft\WebSocket\Server\Message\Request;
+use Swoft\WebSocket\Server\Annotation\Mapping\WsController;
+use Swoft\WebSocket\Server\Annotation\Mapping\MessageMapping;
 
 /**
  * Class HomeController
@@ -24,6 +26,10 @@ use Swoft\WebSocket\Server\Message\Request;
  */
 class HomeController
 {
+    private const REDISUSER = 'user:';  // hash
+    private const TYPE_TEXT = 'text';
+    private const TYPE_IMG = 'img';
+
     /**
      * Message command is: 'home.index'
      *
@@ -32,64 +38,129 @@ class HomeController
      */
     public function index(): void
     {
-        Session::current()->push('hi, this is home.index');
+        Session::current()->push('hi!');
     }
 
     /**
-     * Message command is: 'home.echo'
+     * 用户注册uid
+     * Message command is: 'home.bind'
+     *
+     * @return void
+     * @MessageMapping()
+     */
+    public function bind(Request $req): void
+    {
+        $fd = $req->getFd();
+        $message = $req->getMessage()->toArray();
+        $clientInfo = server()->getSwooleServer()->getClientInfo($fd);
+        $uid = $clientInfo['uid'] ?? 0;
+        $username = $message['data'];
+        $msg = $username . ' 已进入大厅';
+        if (!$uid) {
+            $uid = Redis::incr('chat:offset_uid');
+            $info = [
+                'username' => $username
+            ];
+            Redis::hMSet(self::REDISUSER . $uid, $info);
+            server()->getSwooleServer()->bind($fd, $uid);
+        }
+        $result = [
+            'username' => $username,
+            'msg' => $msg,
+            'system' => true,
+            'date' => date('m/d H:s:i',time()),
+        ];
+
+        server()->pageEach(function ($fd) use($result) {
+            server()->push($fd, $this->result($result));
+        }, 100);
+    }
+
+    /**
+     * Message command is: 'home.text'
      *
      * @param string $data
      * @MessageMapping()
      */
     public function msg(Request $req): void
     {
+        $nowFd = $req->getFd();
+        try {
+            $message = $req->getMessage()->toArray();
+            $clientInfo = server()->getSwooleServer()->getClientInfo($nowFd);
+            if (!isset($message['ext']['type']) || !in_array($message['ext']['type'], [self::TYPE_TEXT, self::TYPE_IMG])) {
+                throw new \Exception('消息类型不正确');
+            }
+            $type = $message['ext']['type'];
+            $user = ChatModule::getUserInfo((int)$clientInfo['uid']);
+            $result = [
+                'username' => $user['username'],
+                'system' => false,
+                'type' => $type,
+                'me' => false,
+                'date' => date('m/d H:s:i', time()),
+                'msg' => $message['data'],
+            ];
+            $result = array_merge($result, call_user_func_array([$this, $type], [$message]));
 
-        //var_dump(Session::current());
-
-//        TestUser::new([
-//        'username' => 'swoft_user',
-//        'num' => 1,
-//        ])->save()
-
-        //$result = TestUser::where(['id' => 2])->toSql();
-
-//        $result = TestUser::new();
-//        $result->setUsername('xxxxxxxxxx');
-//        $result->setNum(1);
-
-        //$result = TestUser::where('username', 'xxxxxxxxxx')->delete();
-
-        //$result = TestUser::where(['id' => 2])->update(['num' => 9]);
-
-        //$result = TestUser::where([['id', '=', 1]])->getModels(['id', 'username']);
-
-        //$result = TestUser::forPage(1, 10)->get(['id', 'username'])->keyBy('id');
-        //Session::current()->push('(home.echo)结果: ' . gettype($result));
+            if (!empty(server()->pageEach(function () {
+            }))) {
+                server()->pageEach(function ($fd) use ($req, $nowFd, $result) {
+                    $result['me'] = $nowFd == $fd;
+                    server()->push($fd, $this->result($result));
+                }, 100);
+            }
+        } catch (\Exception $e) {
+            server()->push($nowFd, $this->result([], 1, $e->getMessage()));
+        }
     }
 
     /**
-     * Message command is: 'home.ar'
-     *
-     * @param string $data
-     * @MessageMapping("ar")
-     *
-     * @return string
+     * 字符处理
+     * @param array $message
+     * @return array
      */
-    public function autoReply(string $data): string
+    private function text(array $message) : array
     {
-        return '(home.ar)Recv: ' . $data;
+        return [];
     }
 
     /**
-     * Message command is: 'help'
+     * 图像处理
      *
      * @param string $data
-     * @MessageMapping("help", root=true)
-     *
-     * @return string
+     * @MessageMapping()
      */
-    public function help(string $data): string
+    private function img(array $message): array
     {
-        return '(home.ar)Recv: ' . $data;
+        $data = $message['data'];
+        $imageDir = ChatModule::UPLOADDIR;
+        $imageName = time() . rand(1000,9999) . ".jpeg";
+        file_put_contents($imageDir . $imageName, $data);
+        $uri = \config('app.siteUri');
+        $port = \Swoft::getBean('httpServer')->getPort();
+        $host = 'http://'.$uri.':'.$port.'/chat-upload-img/';
+        $result = [
+            'msg' => $host . $imageName,
+        ];
+
+        return $result;
+    }
+
+    /**
+     * 统一返回格式
+     * @param array $data
+     * @param int $error
+     * @param string $errorMsg
+     * @return array
+     */
+    private function result(array $data=[], int $error=0, string $errorMsg='') : string
+    {
+        $result = [
+            'error' => $error,
+            'data' => $data,
+            'error_msg' => $errorMsg,
+        ];
+        return json_encode($result);
     }
 }

@@ -28,15 +28,14 @@ window.onload = function(){
       },
       methods: {
         send: function () {
-          var data = '{"router": "home.msg","data": "'+this.sentInput+'","ext": {}}';
+          var data = '{"router": "home.msg","data": "'+this.sentInput+'","ext": {"type": "text"}}';
           console.log("发送消息：" + data);
           this.wsSocket.send(data);
           this.sentInput = null;
         },
         usernameMake: function () {
           var arr = new Array('小明', '小亮', '小红', '小张', '小张');
-          this.username = arr[this.randomNum(0, arr.length)];
-
+          this.username = arr[this.randomNum(0, arr.length-1)];
         },
         randomNum: function (minNum, maxNum) {
           switch(arguments.length){
@@ -64,7 +63,9 @@ window.onload = function(){
           reader.readAsArrayBuffer(file);
           reader.onload = function(e) {
             console.log(e.target.result)
-            that.wsSocket.send(e.target.result);
+
+            var data = '{"router": "home.msg","data": "'+e.target.result+'","ext": {"type": "img"}}';
+            that.wsSocket.send(data);
 
             console.log('正在上传数据...');
           }

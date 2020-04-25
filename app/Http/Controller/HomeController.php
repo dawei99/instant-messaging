@@ -42,6 +42,7 @@ class HomeController
     }
 
     /**
+     * 查看聊天上传图片
      * @RequestMapping("/chat-upload-img[/{img}]")
      * @throws Throwable
      */

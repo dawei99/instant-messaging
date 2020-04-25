@@ -30,8 +30,11 @@ return [
     ],
     'logger'             => [
         'flushRequest' => false,
-        'enable'       => false,
+        'enable'       => true,
         'json'         => false,
+        'handlers'      => [
+            '${applicationHandler}',
+        ],
     ],
     'httpServer'         => [
         'class'    => HttpServer::class,

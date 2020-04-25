@@ -38,7 +38,8 @@ class GlobalWsMiddleware implements MiddlewareInterface
 
         $resp = $handler->handle($request);
 
-        $resp->setData($start . $resp->getData() . ' after>');
+        //$resp->setData($start . $resp->getData() . ' after>');
+        $resp->setData($resp->getData());
 
         CLog::info('after handle');
 

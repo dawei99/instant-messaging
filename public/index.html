@@ -41,11 +41,11 @@
       <div class="chat-history">
         <ul>
           <li v-for="item in items" :key="item.message">
-            <template v-if="item.system == true">
+            <template v-if="item.data.system == true">
 
               <!--系统消息类型-->
               <div class="message-data">
-                <span class="message-data-name"><i class="fa fa-circle online"></i> {{ item.data.message }}</span>
+                <span class="message-data-name"><i class="fa fa-circle online"></i> {{ item.data.msg }}</span>
                 <span class="message-data-time">{{ item.data.date }}</span>
               </div>
 
@@ -59,7 +59,7 @@
                 <li class="clearfix" >
 
 
-                  <template v-if="item.me == true">
+                  <template v-if="item.data.me == true">
                     <div class="message-data align-right">
                       <span class="message-data-time" >{{ item.data.date }}</span> &nbsp; &nbsp;
                       <span class="message-data-name" >{{ item.data.username }}</span> <i class="fa fa-circle me"></i>
@@ -72,20 +72,11 @@
                     </div>
                   </template>
 
-
-                  <template v-if="item.me == true">
-                    <div class="message other-message float-right">
-                      <span v-if="item.type == 'text'">{{ item.data.message }}</span>
-                      <span v-if="item.type == 'img'"><img width="100%" v-bind:src="item.data.message" alt=""></span>
-                    </div>
-                  </template>
-                  <template v-else>
-                    <div class="message my-message">
-                      <span v-if="item.type == 'text'">{{ item.data.message }}</span>
-                      <span v-if="item.type == 'img'"><img width="100%" v-bind:src="item.data.message" alt=""></span>
-                    </div>
-
-                  </template>
+                  <!--聊天气泡-->
+                  <div v-bind:class="[item.data.me == true ? 'message other-message float-right' : 'message my-message']">
+                    <span v-if="item.data.type == 'text'">{{ item.data.msg }}</span>
+                    <span v-if="item.data.type == 'img'"><img width="100%" v-bind:src="item.data.msg" alt=""></span>
+                  </div>
                 </li>
 
             </template>
