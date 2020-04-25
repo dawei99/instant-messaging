@@ -28,7 +28,7 @@ window.onload = function(){
         });
       },
       methods: {
-        send: function () {
+        send() {
           var data = '{"router": "home.msg","data": "'+this.sentInput+'","ext": {"type": "text"}}';
           console.log("发送消息：" + data);
           this.wsSocket.send(data);

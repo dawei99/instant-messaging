@@ -12,7 +12,7 @@ body {
 
 .container {
   margin: 0 auto;
-  width: 750px;
+  width: 93%;
   background: #444753;
   border-radius: 5px;
 }
@@ -69,14 +69,16 @@ body {
 .chat .chat-header {
   padding: 20px;
   border-bottom: 2px solid white;
+  display: -webkit-flex;
+  display: flex;
+  align-items:center;
+  justify-content:space-between;
 }
 .chat .chat-header img {
-  float: left;
 }
 .chat .chat-header .chat-about {
-  float: left;
+  flex: 1;
   padding-left: 10px;
-  margin-top: 6px;
 }
 .chat .chat-header .chat-with {
   font-weight: bold;
@@ -86,10 +88,8 @@ body {
   color: #92959E;
 }
 .chat .chat-header .fa-star {
-  float: right;
   color: #D8DADF;
   font-size: 20px;
-  margin-top: 12px;
 }
 .chat .chat-history {
   padding: 30px 30px 20px;
@@ -206,6 +206,6 @@ body {
   height: 0;
 }
 .clearfix img{
-  border-radius: 52px;
+  border-radius: 50%;
 	overflow: hidden;
 }
