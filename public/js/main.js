@@ -1,5 +1,6 @@
 window.onload = function(){
-    var app = new Vue({
+  const WSHOST = 'ws://localhost:18308'; // websocket服务地址
+  var app = new Vue({
       el: '#app',
       data: {
         items: [
@@ -13,7 +14,7 @@ window.onload = function(){
         this.usernameMake();
         var that = this;
         //Create WebSocket connection.
-        that.wsSocket = new WebSocket('ws://localhost:18308/chat');
+        that.wsSocket = new WebSocket(WSHOST + '/chat');
 
         // Connection opened
         that.wsSocket.addEventListener('open', function (event) {
