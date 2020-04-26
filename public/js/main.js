@@ -1,5 +1,5 @@
+document.write('<script src="./js/host.js"></script>');
 window.onload = function(){
-  document.write('<script type="text/javascript" src="js/hwl.js">')
   var app = new Vue({
       el: '#app',
       data: {
@@ -10,7 +10,6 @@ window.onload = function(){
         username: null,
         showSentInput: false,
         isDisabled:true,
-        wshost:commonstate.WSHOST
       },
       watch:{
         sentInput : function(){
@@ -25,8 +24,7 @@ window.onload = function(){
         this.usernameMake();
         var that = this;
         //Create WebSocket connection.
-        that.wsSocket = new WebSocket(this.wshost + '/chat');
-
+        that.wsSocket = new WebSocket(WSHOST + '/chat');
         // Connection opened
         that.wsSocket.addEventListener('open', function (event) {
         });
