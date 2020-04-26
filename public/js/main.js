@@ -1,5 +1,5 @@
 window.onload = function(){
-  const WSHOST = 'ws://192.168.1.100:18308'; // websocket服务地址
+  document.write('<script type="text/javascript" src="js/hwl.js">')
   var app = new Vue({
       el: '#app',
       data: {
@@ -9,12 +9,23 @@ window.onload = function(){
         sentInput: null,
         username: null,
         showSentInput: false,
+        isDisabled:true,
+        wshost:commonstate.WSHOST
+      },
+      watch:{
+        sentInput : function(){
+          if(this.sentInput==null){
+              this.isDisabled = true;
+          }else{
+              this.isDisabled = false;
+          }
+        }
       },
       mounted: function() {
         this.usernameMake();
         var that = this;
         //Create WebSocket connection.
-        that.wsSocket = new WebSocket(WSHOST + '/chat');
+        that.wsSocket = new WebSocket(this.wshost + '/chat');
 
         // Connection opened
         that.wsSocket.addEventListener('open', function (event) {
@@ -32,6 +43,7 @@ window.onload = function(){
           var data = '{"router": "home.msg","data": "'+this.sentInput+'","ext": {"type": "text"}}';
           console.log("发送消息：" + data);
           this.wsSocket.send(data);
+          this.isDisabled = true;
           this.sentInput = null;
         },
         usernameMake: function () {

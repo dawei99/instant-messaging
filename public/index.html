@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0">
 <title>Chat Widget</title>
+<!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
 
 <!--图标库-->
 <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css'>
@@ -13,13 +15,15 @@
 
 <!-- 主要样式-->
 <link rel="stylesheet" href="css/style.css">
+<script src="js/jquery.min.js"></script>
 <script src="js/vue.js"></script>
 <script src="js/main.js"></script>
 </head>
 <body>
 
   <div id="app">
-    <div class="container clearfix">
+    {{wshost}}
+    <div class="main clearfix">
     <div class="people-list" id="people-list">
       <div class="search">
         <input type="text" placeholder="search" />
@@ -74,7 +78,7 @@
                   </template>
 
                   <!--聊天气泡-->
-                  <div v-bind:class="[item.data.me == true ? 'message other-message float-right' : 'message my-message']">
+                  <div v-bind:class="[item.data.me == true ? 'message other-message' : 'message my-message']">
                     <span v-if="item.data.type == 'text'">{{ item.data.msg }}</span>
                     <span v-if="item.data.type == 'img'"><img width="100%" v-bind:src="item.data.msg" alt=""></span>
                   </div>
@@ -87,23 +91,22 @@
 
       </div> <!-- end chat-history -->
 
-      <div class="chat-message clearfix">
-
-        <template v-if="showSentInput">
-
+      <template v-if="showSentInput">
+        <div class="chat-message2 clearfix">
           <textarea v-model="sentInput" name="message-to-send" id="message-to-send" placeholder ="Type your message" rows="3"></textarea>
-          <input type="file" id="myFile" v-on:change="uploadImg">
-
-          <button v-on:click="send">发送</button>
-
-        </template>
+          <a href="javascript:;" class="file">添加图片
+            <input type="file" id="myFile" v-on:change="uploadImg">
+          </a>
+          <button class="btn" v-bind:class="{disabled : isDisabled}" v-on:click="send">发送</button>
+        </div> <!-- end chat-message -->
+      </template>
         <template v-else>
-
-          用户名 <input type="text" v-model="username">
+          <div class="chat-message clearfix">
+          <i class="fa fa-user"></i>&nbsp;
+          用户名：<input type="text" v-model="username" class="username">
           <button v-on:click="login">进入</button>
-
+          </div> <!-- end chat-message -->
         </template>
-      </div> <!-- end chat-message -->
 
     </div> <!-- end chat -->
 
