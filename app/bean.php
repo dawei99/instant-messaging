@@ -192,5 +192,5 @@ $config = [
     ],
 ];
 
-$config = array($config, require 'bean_local.php');
+$config = array_merge($config, require 'bean_local.php');
 return $config;
