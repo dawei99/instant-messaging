@@ -70,7 +70,8 @@ Run curl -sS https://getcomposer.org/installer | php \
 # Timezone
     && cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime \
     && echo "${TIMEZONE}" > /etc/timezone \
-    && echo "[Date]\ndate.timezone=${TIMEZONE}" > /usr/local/etc/php/conf.d/timezone.ini
+    && echo "[Date]\ndate.timezone=${TIMEZONE}" > /usr/local/etc/php/conf.d/timezone.ini \
+    && composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/
 
 # Install composer deps
 ADD . /var/www/swoft
